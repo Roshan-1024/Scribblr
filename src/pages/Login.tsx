@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { supabase, errMsg } from '../lib/supabase';
+import PasswordInput from '../components/PasswordInput';
 import './login.css';
 
 const COOLDOWN_KEY = 'scribblr-signup-at';
@@ -49,7 +50,7 @@ export default function Login({ joining = false }: { joining?: boolean }) {
           <label>Name<input className="input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={40} autoFocus /></label>
         )}
         <label>Email<input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus={mode === 'in'} /></label>
-        <label>Password<input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></label>
+        <label>Password<PasswordInput autoComplete={mode === 'in' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} /></label>
         {error && <div className="error">{error}</div>}
         {info && <div className="info">{info}</div>}
         <button className="btn" disabled={busy}>{busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : 'Sign up'}</button>

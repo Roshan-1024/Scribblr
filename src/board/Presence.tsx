@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Avatar from '../components/Avatar';
+import AdminBadge from '../components/AdminBadge';
 import { IconClose, IconCopy } from '../components/Icons';
 import type { Profile } from '../lib/supabase';
 import type { Peer } from './collab';
@@ -27,8 +28,9 @@ export default function Presence({ me, peers, shareCode, onFollow }: {
           {extra > 0 && (
             <div className="avatar avatar-more" style={{ width: 32, height: 32, fontSize: 12 }} title={others.slice(4).map((p) => p.name).join(', ')}>+{extra}</div>
           )}
-          <Avatar name={me.display_name} color={me.color} size={32} title={`${me.display_name} (you)`} />
+          <Avatar name={me.display_name} color={me.color} size={32} title={`${me.display_name} (you)`} admin={me.is_admin} />
         </div>
+        {me.is_admin && <AdminBadge />}
         <button className="btn share-btn" onClick={() => setShare(true)}>Share</button>
       </div>
       {share && <ShareDialog code={shareCode} onClose={() => setShare(false)} />}

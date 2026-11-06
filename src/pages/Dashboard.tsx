@@ -10,6 +10,7 @@ import Avatar from '../components/Avatar';
 import { IconLogout, IconPlus, IconTrash } from '../components/Icons';
 import InlineEdit from '../components/InlineEdit';
 import AccountSettings from '../components/AccountSettings';
+import AdminBadge from '../components/AdminBadge';
 import './dashboard.css';
 
 export default function Dashboard({ profile }: { profile: Profile }) {
@@ -42,8 +43,9 @@ export default function Dashboard({ profile }: { profile: Profile }) {
         <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
         <div className="dash-user">
           <button className="user-btn" title="Account settings" onClick={() => setSettings(true)}>
-            <Avatar name={profile.display_name} color={profile.color} />
-            <span>{profile.display_name}{profile.is_admin && <span className="badge">admin</span>}</span>
+            <Avatar name={profile.display_name} color={profile.color} admin={profile.is_admin} />
+            <span>{profile.display_name}</span>
+            {profile.is_admin && <AdminBadge />}
           </button>
           <button className="icon-btn" title="Sign out" onClick={() => supabase.auth.signOut()}><IconLogout /></button>
         </div>

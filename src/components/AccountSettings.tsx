@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { supabase, errMsg, type Profile } from '../lib/supabase';
 import { IconClose } from './Icons';
+import AdminBadge from './AdminBadge';
+import PasswordInput from './PasswordInput';
 
 /** Change email / password. Both require the current password. */
 export default function AccountSettings({ profile, onClose }: { profile: Profile; onClose: () => void }) {
@@ -58,7 +60,7 @@ export default function AccountSettings({ profile, onClose }: { profile: Profile
     <div className="modal-bg" onPointerDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal panel settings" role="dialog" aria-label="Account settings">
         <div className="settings-head">
-          <h3>Account settings {profile.is_admin && <span className="badge">admin</span>}</h3>
+          <h3>Account settings {profile.is_admin && <AdminBadge />}</h3>
           <button className="icon-btn" onClick={onClose} aria-label="Close"><IconClose /></button>
         </div>
         {profile.is_admin && (
@@ -67,7 +69,7 @@ export default function AccountSettings({ profile, onClose }: { profile: Profile
 
         <label className="settings-field">
           Current password <span className="muted">(required for any change)</span>
-          <input className="input" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+          <PasswordInput autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
         </label>
 
         <form onSubmit={saveEmail} className="settings-section">
@@ -78,8 +80,8 @@ export default function AccountSettings({ profile, onClose }: { profile: Profile
 
         <form onSubmit={savePassword} className="settings-section">
           <h4>Password</h4>
-          <input className="input" type="password" autoComplete="new-password" placeholder="New password (min 8 characters)" value={pw} onChange={(e) => setPw(e.target.value)} />
-          <input className="input" type="password" autoComplete="new-password" placeholder="Repeat new password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
+          <PasswordInput autoComplete="new-password" placeholder="New password (min 8 characters)" value={pw} onChange={(e) => setPw(e.target.value)} />
+          <PasswordInput autoComplete="new-password" placeholder="Repeat new password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
           <button className="btn" disabled={!!busy}>{busy === 'pw' ? 'Saving…' : 'Change password'}</button>
         </form>
 
