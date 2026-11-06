@@ -4,3 +4,6 @@ dist/
 *.log
 .DS_Store
 scribblr.config.json
+
+# local test tools, screenshots and test credentials (never commit)
+dev/
