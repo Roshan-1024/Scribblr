@@ -25,7 +25,7 @@ install.cmd
 
 The installer adds the `scribblr` command to your PATH. Node.js and all dependencies are downloaded automatically if they're missing.
 
-On first run it asks for the **Supabase URL and publishable key**; get them from the Scribblr admin. They are saved to `scribblr.config.json` on your machine, which is git-ignored and never committed. Run `scribblr --config` to change them.
+That's it: no accounts to configure. Open Scribblr, sign up, and start drawing.
 
 ## Use
 
@@ -34,7 +34,7 @@ On first run it asks for the **Supabase URL and publishable key**; get them from
 | `scribblr` | Start Scribblr and open the dashboard in your browser |
 | `scribblr <hash>` | Join a shared whiteboard (the board owner gets the hash from **Share**) |
 | `scribblr --update` | Download the latest version (Scribblr tells you when one is available) |
-| `scribblr --config` | Re-enter the Supabase URL and key |
+| `scribblr --config` | Use your own Supabase project instead of the default (for forks) |
 
 Press `Ctrl+C` in the terminal to stop it. To use a different port, set `SCRIBBLR_PORT`, e.g. `SCRIBBLR_PORT=6000 scribblr`.
 
@@ -53,7 +53,7 @@ Press `Ctrl+C` in the terminal to stop it. To use a different port, set `SCRIBBL
 
 Pen tablets work out of the box. The pen's eraser end erases, and touch is ignored while the pen is in use (palm rejection).
 
-## Supabase setup (admin, once)
+## Supabase setup (only if you run your own copy)
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In **SQL Editor**, paste all of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**. Then choose the admin email (no email is stored in the repo):
@@ -61,7 +61,7 @@ Pen tablets work out of the box. The pen's eraser end erases, and touch is ignor
    update public.app_settings set admin_email = 'you@example.com' where id = 1;
    ```
    Sign up in Scribblr with that email to get the admin account. It has no limits; everyone else gets 100 projects and 10 boards per project, which you can change in the `app_settings` table.
-3. Run `scribblr --config` and paste the **Project URL** and **publishable key** (Project Settings → API Keys). They're stored in the git-ignored `scribblr.config.json` (format: [`scribblr.config.example.json`](scribblr.config.example.json)). Share them with collaborators privately, never through the repo. Never use the `service_role`/secret key here.
+3. Put the **Project URL** and **publishable key** (Project Settings → API Keys) in [`scribblr.public.json`](scribblr.public.json) and commit it. Both are public by design: every browser running Scribblr receives them, and your data is protected by the row-level security rules in `schema.sql`. **Never** use the secret / `service_role` key; the build refuses to run if one is put there. (A git-ignored `scribblr.config.json` with the same format overrides it locally; `scribblr --config` creates one.)
 4. In **Authentication → Sign In / Providers → Email**, decide on **Confirm email**. Supabase's built-in email service only sends a few emails per hour, so either turn confirmation off or add your own SMTP server.
 5. In **Authentication → Rate Limits**, adjust the sign-up limit if needed. The app also enforces a 1-minute cooldown between sign-ups on each device.
 

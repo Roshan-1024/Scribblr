@@ -49,16 +49,17 @@ function Ensure-Deps {
   }
 }
 
-# Supabase keys live in scribblr.config.json, which is NOT in git. Ask for them on first run.
-function Ensure-Config([switch]$Force) {
+# The Supabase URL + publishable key ship in scribblr.public.json (public by design).
+# `scribblr --config` writes scribblr.config.json, an optional git-ignored override.
+function Configure-Override {
   $f = Join-Path $AppDir 'scribblr.config.json'
-  if (-not $Force -and (Test-Path $f) -and ((Get-Content $f -Raw) -match '"supabaseUrl":\s*"https://')) { return }
-  Log 'First-time setup: enter the Supabase details (ask the Scribblr admin for them).'
+  Log 'Point Scribblr at a different Supabase project (saved to scribblr.config.json, git-ignored).'
   do { $url = (Read-Host '  Supabase URL (https://xxxx.supabase.co)').Trim() } until ($url -match '^https://[A-Za-z0-9.-]+$')
-  do { $key = (Read-Host '  Supabase publishable/anon key').Trim() } until ($key -match '^[A-Za-z0-9._-]{20,}$')
+  do { $key = (Read-Host '  Supabase publishable key (sb_publishable_...)').Trim() } until ($key -match '^[A-Za-z0-9._-]{20,}$')
+  if ($key -like 'sb_secret_*') { Die "That's a SECRET key. Use the publishable key." }
   $json = "{`n  `"supabaseUrl`": `"$url`",`n  `"supabaseAnonKey`": `"$key`"`n}`n"
   [IO.File]::WriteAllText($f, $json)
-  Log 'Saved to scribblr.config.json (kept out of git).'
+  Log 'Saved. To go back to the default project: delete scribblr.config.json'
 }
 
 function Ensure-Build {
@@ -66,7 +67,7 @@ function Ensure-Build {
   $stale = -not (Test-Path $index)
   if (-not $stale) {
     $t = (Get-Item $index).LastWriteTime
-    $stale = [bool](Get-ChildItem src, public, index.html, package-lock.json, scribblr.config.json -Recurse -File -ErrorAction SilentlyContinue |
+    $stale = [bool](Get-ChildItem src, public, index.html, package-lock.json, scribblr.public.json, scribblr.config.json, vite.config.ts -Recurse -File -ErrorAction SilentlyContinue |
       Where-Object { $_.LastWriteTime -gt $t } | Select-Object -First 1)
   }
   if ($stale) {
@@ -93,13 +94,13 @@ function Check-Update {
 $arg = if ($args.Count -gt 0) { [string]$args[0] } else { '' }
 switch ($arg) {
   { $_ -in '-h', '--help' } { 'Usage: scribblr [board-hash] | --update | --config'; exit 0 }
-  '--config' { Ensure-Config -Force; exit 0 }
+  '--config' { Configure-Override; exit 0 }
   '--update' {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Die 'git is required to update' }
     Log 'Updating...'; git pull --ff-only -q; if ($LASTEXITCODE -ne 0) { Die 'Update failed (local changes?)' }
-    Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; Log 'Updated.'; exit 0
+    Ensure-Node; Ensure-Deps; Ensure-Build; Log 'Updated.'; exit 0
   }
-  '--prepare' { Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; exit 0 }
+  '--prepare' { Ensure-Node; Ensure-Deps; Ensure-Build; exit 0 }
 }
 
 $Url = "http://localhost:$Port/#/"
@@ -108,7 +109,7 @@ if ($arg) {
   $Url = "http://localhost:$Port/#/join/$arg"
 }
 
-Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; Check-Update
+Ensure-Node; Ensure-Deps; Ensure-Build; Check-Update
 
 if (Test-Running) { Log 'Scribblr is already running.'; Start-Process $Url; exit 0 }
 

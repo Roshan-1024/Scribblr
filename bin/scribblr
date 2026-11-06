@@ -54,21 +54,22 @@ ensure_deps() {
   fi
 }
 
-# Supabase keys live in scribblr.config.json, which is NOT in git. Ask for them on first run.
-ensure_config() {
-  local f="$APP_DIR/scribblr.config.json"
-  if [ "${1:-}" != force ] && [ -f "$f" ] && grep -q '"supabaseUrl": *"https://' "$f"; then return; fi
-  [ -t 0 ] || die "Missing scribblr.config.json. Run 'scribblr --config' in a terminal."
-  log "First-time setup: enter the Supabase details (ask the Scribblr admin for them)."
-  local url key
+# The Supabase URL + publishable key ship in scribblr.public.json (public by design).
+# `scribblr --config` writes scribblr.config.json, an optional git-ignored override
+# (e.g. to point a fork at your own Supabase project).
+configure_override() {
+  [ -t 0 ] || die "Run 'scribblr --config' in an interactive terminal."
+  local f="$APP_DIR/scribblr.config.json" url key
+  log "Point Scribblr at a different Supabase project (saved to scribblr.config.json, git-ignored)."
   while true; do read -rp "  Supabase URL (https://xxxx.supabase.co): " url; [[ $url =~ ^https://[A-Za-z0-9.-]+$ ]] && break; echo "  That doesn't look like a Supabase URL."; done
-  while true; do read -rp "  Supabase publishable/anon key: " key; [[ $key =~ ^[A-Za-z0-9._-]{20,}$ ]] && break; echo "  That doesn't look like a key."; done
+  while true; do read -rp "  Supabase publishable key (sb_publishable_...): " key; [[ $key =~ ^[A-Za-z0-9._-]{20,}$ ]] && break; echo "  That doesn't look like a key."; done
+  [[ $key == sb_secret_* ]] && die "That's a SECRET key. Use the publishable key."
   printf '{\n  "supabaseUrl": "%s",\n  "supabaseAnonKey": "%s"\n}\n' "$url" "$key" >"$f"
-  log "Saved to scribblr.config.json (kept out of git)."
+  log "Saved. To go back to the default project: delete scribblr.config.json"
 }
 
 ensure_build() {
-  if [ ! -f dist/index.html ] || [ -n "$(find src public index.html package-lock.json scribblr.config.json -newer dist/index.html 2>/dev/null | head -1)" ]; then
+  if [ ! -f dist/index.html ] || [ -n "$(find src public index.html package-lock.json scribblr.public.json scribblr.config.json vite.config.ts -newer dist/index.html 2>/dev/null | head -1)" ]; then
     log "Building Scribblr..."
     npx vite build --logLevel error >"$LOCAL/build.log" 2>&1 || { cat "$LOCAL/build.log"; die "Build failed"; }
   fi
@@ -97,13 +98,13 @@ case "${1:-}" in
   -h|--help)
     echo "Usage: scribblr [board-hash] | --update | --config"; exit 0 ;;
   --config)
-    ensure_config force; exit 0 ;;
+    configure_override; exit 0 ;;
   --update)
     command -v git >/dev/null || die "git is required to update"
     log "Updating..."; git pull --ff-only -q || die "Update failed (local changes?)"
-    ensure_config; ensure_node; ensure_deps; ensure_build; log "Updated to $(git rev-parse --short HEAD)."; exit 0 ;;
+    ensure_node; ensure_deps; ensure_build; log "Updated to $(git rev-parse --short HEAD)."; exit 0 ;;
   --prepare)
-    ensure_config; ensure_node; ensure_deps; ensure_build; exit 0 ;;
+    ensure_node; ensure_deps; ensure_build; exit 0 ;;
 esac
 
 URL="http://localhost:$PORT/#/"
@@ -112,7 +113,6 @@ if [ -n "${1:-}" ]; then
   URL="http://localhost:$PORT/#/join/$1"
 fi
 
-ensure_config
 ensure_node
 ensure_deps
 ensure_build
