@@ -197,7 +197,7 @@ create policy "projects owner" on public.projects for all to authenticated
 
 drop policy if exists "boards read" on public.boards;
 create policy "boards read" on public.boards for select to authenticated
-  using (public.is_board_member(id));
+  using (owner_id = auth.uid() or public.is_board_member(id));
 drop policy if exists "boards insert" on public.boards;
 create policy "boards insert" on public.boards for insert to authenticated
   with check (owner_id = auth.uid() and exists (select 1 from public.projects p where p.id = project_id and p.owner_id = auth.uid()));
