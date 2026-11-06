@@ -12,6 +12,7 @@ import { BoardPersistence, saveLabel, type SaveState } from './persistence';
 import { BoardCollab, type Peer } from './collab';
 import type { EngineEvents, RemoteCursor } from './engine';
 import Presence from './Presence';
+import ChatPanel from './ChatPanel';
 import './board.css';
 
 export default function BoardPage({ boardId, profile }: { boardId: string; profile: Profile }) {
@@ -134,6 +135,7 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
         onZoomOut={() => ui.engine.current?.zoomStep(-1)}
         onReset={() => ui.engine.current?.zoomTo(1)}
       />
+      <ChatPanel boardId={boardId} me={profile} onError={showError} />
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
