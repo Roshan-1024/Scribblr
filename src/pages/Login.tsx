@@ -5,7 +5,7 @@ import './login.css';
 const COOLDOWN_KEY = 'scribblr-signup-at';
 const COOLDOWN_MS = 60_000; // client-side guard; Supabase also rate limits sign-ups per IP
 
-export default function Login() {
+export default function Login({ joining = false }: { joining?: boolean }) {
   const [mode, setMode] = useState<'in' | 'up'>('in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,6 +44,7 @@ export default function Login() {
       <form className="login-card panel" onSubmit={submit}>
         <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
         <h1>{mode === 'in' ? 'Welcome back' : 'Create your account'}</h1>
+        {joining && <div className="info">Sign in or create an account to join the shared board.</div>}
         {mode === 'up' && (
           <label>Name<input className="input" value={name} onChange={(e) => setName(e.target.value)} required maxLength={40} autoFocus /></label>
         )}
