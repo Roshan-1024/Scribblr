@@ -1,18 +1,25 @@
 # Scribblr
 
-A fast, infinite, collaborative whiteboard for note taking. You run it locally with one command; Supabase handles accounts, saving and real-time sync.
+Blazingly fast, infinite whiteboard for note-taking, with real-time collaboration, pen-tablet support and auto-save. Runs locally with one command.
+
+- **Infinite canvas**: pan and zoom freely; only what's on screen is drawn, so big boards stay smooth.
+- **Note-taking tools**: pen, highlighter, stroke eraser, lasso, select/move, undo/redo.
+- **Pen tablets**: low-latency strokes, the pen's eraser end erases, palm rejection.
+- **Real-time collaboration**: live cursors, see others' strokes as they draw, avatars of who's online, group chat per board.
+- **Auto-save**: instant local save that also works offline, synced to the cloud (Supabase) within a second.
+- **Projects and boards**: a dashboard of projects, each with many boards; lock a board so nobody can edit it.
 
 ## Install (once)
 
 **Linux / macOS**
 ```bash
-git clone <this repo> scribblr && cd scribblr
+git clone https://github.com/Roshan-1024/Scribblr.git && cd Scribblr
 ./install.sh
 ```
 
 **Windows** (Command Prompt or PowerShell)
 ```bat
-git clone <this repo> scribblr && cd scribblr
+git clone https://github.com/Roshan-1024/Scribblr.git && cd Scribblr
 install.cmd
 ```
 
