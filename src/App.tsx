@@ -3,6 +3,7 @@ import { isConfigured } from './lib/supabase';
 import { useRoute } from './router';
 import Login from './pages/Login';
 import Setup from './pages/Setup';
+import Dashboard from './pages/Dashboard';
 
 export default function App() {
   const auth = useAuth();
@@ -10,9 +11,9 @@ export default function App() {
   if (!isConfigured) return <Setup />;
   if (auth.status === 'loading') return <div className="center-screen"><div className="brand"><img src="/logo.svg" alt="" />Scribblr</div></div>;
   if (auth.status === 'signed-out') return <Login />;
-  return (
-    <div className="center-screen">
-      <p>Signed in as {auth.profile.display_name} — {route.name}</p>
-    </div>
-  );
+  const { profile } = auth;
+  switch (route.name) {
+    default:
+      return <Dashboard profile={profile} />;
+  }
 }
