@@ -1,6 +1,22 @@
-# Scribblr
+<p align="center">
+  <img src="public/logo.svg" alt="Scribblr logo" width="128" height="128">
+</p>
 
-Blazingly fast, infinite whiteboard for note-taking, with real-time collaboration, pen-tablet support and auto-save. Runs locally with one command.
+<h1 align="center">Scribblr</h1>
+
+<p align="center">
+  <b>Blazingly fast, infinite whiteboard for note-taking.</b><br>
+  Real-time collaboration, pen-tablet support and auto-save. Runs locally with one command.
+</p>
+
+<p align="center">
+  <a href="#install-once">Install</a> ·
+  <a href="#use">Use</a> ·
+  <a href="#shortcuts">Shortcuts</a> ·
+  <a href="docs/self-hosting.md">Self-hosting</a>
+</p>
+
+---
 
 - **Infinite canvas**: pan and zoom freely; only what's on screen is drawn, so big boards stay smooth.
 - **Note-taking tools**: pen, highlighter, stroke eraser, lasso, select/move, undo/redo.
