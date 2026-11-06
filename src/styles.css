@@ -24,7 +24,7 @@
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; height: 100%; background: var(--bg); }
 button { font: inherit; color: inherit; cursor: pointer; }
-input { font: inherit; color: inherit; }
+input, textarea { font: inherit; color: inherit; }
 
 /* ---------- generic controls ---------- */
 .btn {
