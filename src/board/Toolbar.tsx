@@ -136,6 +136,7 @@ function StylePicker({ style, range, onChange }: {
   const custom = !PALETTE.some((c) => c.toLowerCase() === style.color.toLowerCase());
   const pct = ((style.width - range.min) / (range.max - range.min)) * 100;
   const knob = Math.round(10 + (pct / 100) * 16); // knob diameter in px (10 → 26)
+  const [hexOpen, setHexOpen] = useState(false);
 
   // Drag handled by us with pointer capture: only horizontal position matters, so a pen (or finger)
   // drifting above/below the slider keeps dragging instead of being cancelled by the browser.
@@ -185,13 +186,55 @@ function StylePicker({ style, range, onChange }: {
             </button>
           );
         })}
-        <label className={`sp-swatch sp-custom${custom ? ' on' : ''}`} title="Custom colour"
+        <button className={`sp-swatch sp-custom${custom ? ' on' : ''}`} title="Custom colour (hex)" aria-label="Custom colour"
+          aria-expanded={hexOpen} onClick={() => setHexOpen(!hexOpen)}
           style={custom ? { background: style.color, ['--ring' as string]: style.color } : undefined}>
-          <input type="color" value={style.color} onChange={(e) => onChange({ ...style, color: e.target.value.toUpperCase() })} />
           {custom ? <Check dark={isLight(style.color)} /> : <Plus size={16} strokeWidth={2} />}
-        </label>
+        </button>
       </div>
+      {hexOpen && (
+        <HexPopover
+          initial={style.color}
+          onApply={(c) => { onChange({ ...style, color: c }); setHexOpen(false); }}
+          onClose={() => setHexOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/** '#abc', 'abc', '#AABBCC' or 'aabbcc' → '#AABBCC'; null if not a valid hex colour. */
+export function parseHex(input: string): string | null {
+  const v = input.trim().replace(/^#/, '');
+  if (/^[0-9a-f]{3}$/i.test(v)) return '#' + v.split('').map((c) => c + c).join('').toUpperCase();
+  if (/^[0-9a-f]{6}$/i.test(v)) return '#' + v.toUpperCase();
+  return null;
+}
+
+/** Small rounded popup asking for a hex colour, with a live preview. */
+function HexPopover({ initial, onApply, onClose }: { initial: string; onApply: (c: string) => void; onClose: () => void }) {
+  const [text, setText] = useState(initial.toUpperCase());
+  const color = parseHex(text);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.select(); }, []);
+  return (
+    <form className="hex-pop" onSubmit={(e) => { e.preventDefault(); if (color) onApply(color); }}>
+      <label className="hex-label" htmlFor="hex-input">Hex colour</label>
+      <div className="hex-row">
+        <span className="hex-preview" style={color ? { background: color } : undefined} aria-hidden />
+        <input
+          id="hex-input" ref={inputRef} className={`hex-input${color ? '' : ' invalid'}`} value={text} maxLength={7}
+          spellCheck={false} autoComplete="off" placeholder="#RRGGBB" aria-invalid={!color}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Escape') onClose(); }}
+        />
+      </div>
+      {!color && <div className="hex-error">Enter a hex colour like #3A7BD5 or #F80</div>}
+      <div className="hex-actions">
+        <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
+        <button type="submit" className="btn" disabled={!color}>Apply</button>
+      </div>
+    </form>
   );
 }
 
