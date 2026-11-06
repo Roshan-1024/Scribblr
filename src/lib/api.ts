@@ -8,6 +8,7 @@ export type Board = {
   share_code: string;
   locked: boolean;
   position?: number | null;
+  thumbnail?: string | null;
   created_at: string;
   updated_at: string;
 };

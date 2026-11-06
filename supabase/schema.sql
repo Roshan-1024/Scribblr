@@ -43,6 +43,7 @@ create table if not exists public.boards (
   share_code text not null unique default replace(replace(encode(extensions.gen_random_bytes(9), 'base64'), '/', '_'), '+', '-'),
   locked boolean not null default false,
   position double precision default extract(epoch from now()), -- drag-and-drop order
+  thumbnail text,                 -- small data: URL preview for the dashboard
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -218,6 +219,22 @@ begin
   insert into board_docs (board_id, state, updated_at) values (b, s, now())
     on conflict (board_id) do update set state = excluded.state, updated_at = now();
   update boards set updated_at = now() where id = b;
+end $$;
+
+-- Dashboard preview image, uploaded in the background after a save
+create or replace function public.set_board_thumbnail(b uuid, t text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from board_members where board_id = b and user_id = auth.uid()) then
+    raise exception 'Not a member';
+  end if;
+  if (select locked from boards where id = b) and (select owner_id from boards where id = b) <> auth.uid() then
+    raise exception 'Board is locked';
+  end if;
+  if length(t) > 300000 or (t <> '' and t not like 'data:image/%') then
+    raise exception 'Invalid thumbnail';
+  end if;
+  update boards set thumbnail = nullif(t, '') where id = b; -- '' clears it (empty board)
 end $$;
 
 -- ---------- row level security ----------

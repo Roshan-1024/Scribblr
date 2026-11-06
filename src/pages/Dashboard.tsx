@@ -6,6 +6,7 @@ import {
   renameProject, reorderBoards, timeAgo, type Board, type Project,
 } from '../lib/api';
 import { navigate } from '../router';
+import { thumbnailsSettled } from '../board/persistence';
 import Avatar from '../components/Avatar';
 import { IconLogout, IconPlus, IconTrash } from '../components/Icons';
 import InlineEdit from '../components/InlineEdit';
@@ -21,6 +22,7 @@ export default function Dashboard({ profile }: { profile: Profile }) {
 
   const load = useCallback(async () => {
     try {
+      await thumbnailsSettled(); // so a board you just left shows its latest preview
       const [p, s] = await Promise.all([listProjects(profile.id), listSharedBoards(profile.id)]);
       setProjects(p); setShared(s);
     } catch (e) { setError(errMsg(e)); }
@@ -159,12 +161,19 @@ function SortableBoards({ project, onDelete, onNew, onError }: {
   );
 }
 
+const thumbStyle = (src: string) => ({
+  backgroundImage: `url("${src}"), radial-gradient(#d4d4de 1px, transparent 1px)`,
+  backgroundSize: 'contain, 14px 14px',
+  backgroundRepeat: 'no-repeat, repeat',
+  backgroundPosition: 'center, 0 0',
+});
+
 function BoardCard({ board, onDelete, deleteLabel = 'Delete board', drag, dragging = false }: {
   board: Board; onDelete: () => void; deleteLabel?: string; drag?: HTMLAttributes<HTMLDivElement>; dragging?: boolean;
 }) {
   return (
     <div className={`board-card${dragging ? ' dragging' : ''}`} onClick={() => navigate(`/b/${board.id}`)} {...drag}>
-      <div className="thumb" />
+      <div className="thumb" style={board.thumbnail ? thumbStyle(board.thumbnail) : undefined} />
       <div className="board-meta">
         <div className="board-title">{board.title}</div>
         <div className="muted small">Edited {timeAgo(board.updated_at)}{board.locked ? ' · locked' : ''}</div>

@@ -2,8 +2,18 @@ import * as Y from 'yjs';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { supabase } from '../lib/supabase';
 import { LOCAL_ORIGIN } from './types';
+import { renderThumbnail } from './thumbnail';
 
 export const DB_ORIGIN = 'db';
+let thumbnailsSupported = true; // false if the database predates migration 005
+const THUMB_EVERY_MS = 10_000;
+const pendingThumbs = new Set<Promise<void>>();
+
+/** Wait (briefly) for preview uploads still in flight, e.g. just after leaving a board. */
+export function thumbnailsSettled(maxMs = 1500): Promise<void> {
+  if (!pendingThumbs.size) return Promise.resolve();
+  return Promise.race([Promise.all(pendingThumbs).then(() => {}), new Promise<void>((r) => setTimeout(r, maxMs))]);
+}
 export type SaveState = 'loading' | 'saved' | 'saving' | 'unsaved' | 'offline' | 'readonly';
 
 export function toBase64(u8: Uint8Array): string {
@@ -58,6 +68,7 @@ export class BoardPersistence {
         Y.applyUpdate(this.doc, remote, DB_ORIGIN);
       }
       if (!this.dirty) this.set('saved');
+      if (this.doc.getMap('strokes').size > 0) this.scheduleThumbnail(); // refresh preview (older boards have none)
     }
     // In the background: once the local copy is open, upload anything only it has (offline edits).
     this.idb.whenSynced.then(() => {
@@ -112,7 +123,33 @@ export class BoardPersistence {
       this.timer = window.setTimeout(() => this.flush(), 5000); // retry
       return;
     }
+    this.scheduleThumbnail();
     if (this.dirty) this.schedule(); else this.set('saved');
+  }
+
+  // ---- dashboard preview: rendered in a worker, uploaded separately so it never delays saving ----
+  private thumbTimer = 0;
+  private lastThumb = 0;
+
+  private scheduleThumbnail() {
+    if (!thumbnailsSupported || this.thumbTimer) return;
+    const wait = Math.max(0, THUMB_EVERY_MS - (Date.now() - this.lastThumb));
+    this.thumbTimer = window.setTimeout(() => this.uploadThumbnail(), wait);
+  }
+
+  private uploadThumbnail() {
+    clearTimeout(this.thumbTimer);
+    this.thumbTimer = 0;
+    if (!thumbnailsSupported) return;
+    this.lastThumb = Date.now();
+    const job = renderThumbnail(this.doc)
+      .then((t) => supabase.rpc('set_board_thumbnail', { b: this.boardId, t }))
+      .then(({ error }) => {
+        if (error && /function|schema cache/i.test(error.message)) thumbnailsSupported = false; // migration 005 not run yet
+      })
+      .catch(() => { /* preview is optional */ });
+    pendingThumbs.add(job);
+    job.finally(() => pendingThumbs.delete(job));
   }
 
   private set(s: SaveState) {
@@ -129,6 +166,7 @@ export class BoardPersistence {
 
   async destroy() {
     await this.flush();
+    if (this.thumbTimer) this.uploadThumbnail(); // leaving the board: update its preview now
     this.destroyed = true;
     clearTimeout(this.timer);
     this.doc.off('update', this.onUpdate);
