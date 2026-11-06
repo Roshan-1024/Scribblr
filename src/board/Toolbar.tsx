@@ -142,7 +142,13 @@ function StylePicker({ style, range, onChange }: {
         <span className="sp-value">{Math.round(style.width)}</span>
         <input
           type="range" className="sp-slider" min={range.min} max={range.max} step={1} value={Math.round(style.width)}
-          style={{ ['--pct' as string]: `${pct}%` }}
+          style={{
+            ['--pct' as string]: `${pct}%`,
+            // knob shows the current colour, and grows with thickness (10px → 26px)
+            ['--knob' as string]: `${Math.round(10 + (pct / 100) * 16)}px`,
+            ['--knob-color' as string]: style.color,
+            ['--knob-edge' as string]: isLight(style.color) ? 'rgba(5,0,56,.28)' : '#fff',
+          }}
           onChange={(e) => onChange({ ...style, width: Number(e.target.value) })}
           aria-label="Thickness"
         />

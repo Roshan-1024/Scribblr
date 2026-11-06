@@ -39,18 +39,25 @@
   border-radius: 10px; box-shadow: 0 6px 24px rgba(5,0,56,.14), 0 0 1px rgba(5,0,56,.2); cursor: default;
 }
 .sp-label { font-size: 14px; color: #3b3a4f; margin-bottom: 10px; }
-.sp-thickness { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; padding-left: 2px; }
+.sp-thickness { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; padding-left: 2px; height: 30px; }
 .sp-value { width: 22px; font-size: 14px; color: #3b3a4f; font-variant-numeric: tabular-nums; }
+/* The input is as tall as the biggest knob; the 4px track is drawn as a centred background. */
 .sp-slider {
-  flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; outline: none; cursor: pointer;
-  background: linear-gradient(to right, #c5c5d2 var(--pct), #ebebef var(--pct));
+  flex: 1; -webkit-appearance: none; appearance: none; height: 28px; margin: 0; outline: none; cursor: pointer; background:
+    linear-gradient(to right, #c5c5d2 var(--pct), #ebebef var(--pct)) center / 100% 4px no-repeat;
 }
 .sp-slider::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff;
-  border: 1.5px solid #8a8a9a; box-shadow: 0 1px 2px rgba(0,0,0,.15); transition: transform .1s;
+  -webkit-appearance: none; width: var(--knob); height: var(--knob); border-radius: 50%; background: var(--knob-color);
+  border: 2px solid var(--knob-edge); box-shadow: 0 0 0 1px rgba(5,0,56,.12), 0 1px 3px rgba(5,0,56,.25);
+  transition: width .08s ease-out, height .08s ease-out, transform .1s;
 }
-.sp-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 1.5px solid #8a8a9a; }
-.sp-slider:hover::-webkit-slider-thumb { transform: scale(1.15); }
+.sp-slider::-moz-range-thumb {
+  width: var(--knob); height: var(--knob); border-radius: 50%; background: var(--knob-color); box-sizing: border-box;
+  border: 2px solid var(--knob-edge); box-shadow: 0 0 0 1px rgba(5,0,56,.12), 0 1px 3px rgba(5,0,56,.25);
+}
+.sp-slider::-moz-range-track { background: transparent; }
+.sp-slider:hover::-webkit-slider-thumb { transform: scale(1.08); }
+.sp-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--blue-soft), 0 1px 3px rgba(5,0,56,.25); }
 .sp-grid { display: grid; grid-template-columns: repeat(5, 28px); justify-content: space-between; row-gap: 12px; }
 .sp-swatch {
   position: relative; width: 28px; height: 28px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
