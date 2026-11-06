@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import * as Y from 'yjs';
 import type { Profile } from '../lib/supabase';
 import Toolbar from './Toolbar';
+import ZoomControls from './ZoomControls';
 import { useEngine } from './useEngine';
 import './board.css';
 
@@ -24,6 +25,13 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
         onUndo={() => ui.engine.current?.doUndo()}
         onRedo={() => ui.engine.current?.doRedo()}
         locked={false}
+      />
+      <ZoomControls
+        zoom={ui.zoom}
+        onRecenter={() => ui.engine.current?.recenter()}
+        onZoomIn={() => ui.engine.current?.zoomStep(1)}
+        onZoomOut={() => ui.engine.current?.zoomStep(-1)}
+        onReset={() => ui.engine.current?.zoomTo(1)}
       />
     </div>
   );
