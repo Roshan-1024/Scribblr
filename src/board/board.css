@@ -43,7 +43,8 @@
 .sp-value { width: 22px; font-size: 14px; color: #3b3a4f; font-variant-numeric: tabular-nums; }
 /* The input is as tall as the biggest knob; the 4px track is drawn as a centred background. */
 .sp-slider {
-  flex: 1; -webkit-appearance: none; appearance: none; height: 28px; margin: 0; outline: none; cursor: pointer; background:
+  flex: 1; -webkit-appearance: none; appearance: none; height: 28px; margin: 0; outline: none; cursor: pointer;
+  touch-action: none; /* pen/touch drags never turn into scrolling */ background:
     linear-gradient(to right, #c5c5d2 var(--pct), #ebebef var(--pct)) center / 100% 4px no-repeat;
 }
 .sp-slider::-webkit-slider-thumb {

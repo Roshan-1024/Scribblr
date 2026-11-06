@@ -135,6 +135,16 @@ function StylePicker({ style, range, onChange }: {
 }) {
   const custom = !PALETTE.some((c) => c.toLowerCase() === style.color.toLowerCase());
   const pct = ((style.width - range.min) / (range.max - range.min)) * 100;
+  const knob = Math.round(10 + (pct / 100) * 16); // knob diameter in px (10 → 26)
+
+  // Drag handled by us with pointer capture: only horizontal position matters, so a pen (or finger)
+  // drifting above/below the slider keeps dragging instead of being cancelled by the browser.
+  const setFromX = (el: HTMLInputElement, clientX: number) => {
+    const r = el.getBoundingClientRect();
+    const t = Math.min(1, Math.max(0, (clientX - r.left - knob / 2) / Math.max(1, r.width - knob)));
+    const width = Math.round(range.min + t * (range.max - range.min));
+    if (width !== Math.round(style.width)) onChange({ ...style, width });
+  };
   return (
     <div className="style-picker panel" onPointerDown={(e) => e.stopPropagation()}>
       <div className="sp-label">Thickness</div>
@@ -142,10 +152,18 @@ function StylePicker({ style, range, onChange }: {
         <span className="sp-value">{Math.round(style.width)}</span>
         <input
           type="range" className="sp-slider" min={range.min} max={range.max} step={1} value={Math.round(style.width)}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault(); // take over from the native drag
+            e.currentTarget.setPointerCapture(e.pointerId);
+            e.currentTarget.focus();
+            setFromX(e.currentTarget, e.clientX);
+          }}
+          onPointerMove={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) setFromX(e.currentTarget, e.clientX); }}
           style={{
             ['--pct' as string]: `${pct}%`,
             // knob shows the current colour, and grows with thickness (10px → 26px)
-            ['--knob' as string]: `${Math.round(10 + (pct / 100) * 16)}px`,
+            ['--knob' as string]: `${knob}px`,
             ['--knob-color' as string]: style.color,
             ['--knob-edge' as string]: isLight(style.color) ? 'rgba(5,0,56,.28)' : '#fff',
           }}
