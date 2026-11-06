@@ -42,6 +42,7 @@ create table if not exists public.boards (
   title text not null default 'Untitled board' check (char_length(title) between 1 and 120),
   share_code text not null unique default replace(replace(encode(extensions.gen_random_bytes(9), 'base64'), '/', '_'), '+', '-'),
   locked boolean not null default false,
+  position double precision default extract(epoch from now()), -- drag-and-drop order
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -178,6 +179,18 @@ end $$;
 drop trigger if exists boards_owner on public.boards;
 create trigger boards_owner after insert on public.boards
   for each row execute function public.add_board_owner();
+
+-- Save a new board order in one call (project owner only)
+create or replace function public.reorder_boards(p uuid, ids uuid[]) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from projects where id = p and owner_id = auth.uid()) then
+    raise exception 'Only the project owner can reorder its boards';
+  end if;
+  update boards b set position = x.ord
+  from unnest(ids) with ordinality as x(id, ord)
+  where b.id = x.id and b.project_id = p;
+end $$;
 
 -- Join a board with its share hash (used by `scribblr <hash>`)
 create or replace function public.join_board(code text) returns uuid

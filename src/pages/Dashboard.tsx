@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type HTMLAttributes } from 'react';
 import type { Profile } from '../lib/supabase';
 import { supabase, errMsg } from '../lib/supabase';
 import {
   createBoard, createProject, deleteBoard, deleteProject, leaveBoard, listProjects, listSharedBoards,
-  renameProject, timeAgo, type Board, type Project,
+  renameProject, reorderBoards, timeAgo, type Board, type Project,
 } from '../lib/api';
 import { navigate } from '../router';
 import Avatar from '../components/Avatar';
@@ -74,14 +74,12 @@ export default function Dashboard({ profile }: { profile: Profile }) {
                 onClick={() => confirm(`Delete project "${p.name}" and all its boards?`) && run(() => deleteProject(p.id))()}
               ><IconTrash size={16} /></button>
             </div>
-            <div className="board-grid">
-              {p.boards.map((b) => (
-                <BoardCard key={b.id} board={b} onDelete={() => confirm(`Delete board "${b.title}"?`) && run(() => deleteBoard(b.id))()} />
-              ))}
-              <button className="board-card new" onClick={() => newBoard(p.id)}>
-                <IconPlus /> New board
-              </button>
-            </div>
+            <SortableBoards
+              project={p}
+              onDelete={(b) => confirm(`Delete board "${b.title}"?`) && run(() => deleteBoard(b.id))()}
+              onNew={() => newBoard(p.id)}
+              onError={setError}
+            />
           </section>
         ))}
 
@@ -101,9 +99,71 @@ export default function Dashboard({ profile }: { profile: Profile }) {
   );
 }
 
-function BoardCard({ board, onDelete, deleteLabel = 'Delete board' }: { board: Board; onDelete: () => void; deleteLabel?: string }) {
+/** A project's boards; drag a card onto another to reorder. The new order is saved for the project. */
+function SortableBoards({ project, onDelete, onNew, onError }: {
+  project: Project; onDelete: (b: Board) => void; onNew: () => void; onError: (m: string) => void;
+}) {
+  const [order, setOrder] = useState<Board[]>(project.boards);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const startOrder = useRef<Board[]>(project.boards);
+  useEffect(() => { setOrder(project.boards); }, [project.boards]);
+
+  const moveTo = (targetId: string) => {
+    if (!dragId || dragId === targetId) return;
+    setOrder((list) => {
+      const from = list.findIndex((b) => b.id === dragId), to = list.findIndex((b) => b.id === targetId);
+      if (from < 0 || to < 0) return list;
+      const next = [...list];
+      next.splice(to, 0, next.splice(from, 1)[0]);
+      return next;
+    });
+  };
+
+  async function finish() {
+    const before = startOrder.current;
+    setDragId(null);
+    if (order.map((b) => b.id).join() === before.map((b) => b.id).join()) return;
+    try {
+      await reorderBoards(project.id, order.map((b) => b.id));
+    } catch (e) {
+      setOrder(before);
+      onError(errMsg(e));
+    }
+  }
+
   return (
-    <div className="board-card" onClick={() => navigate(`/b/${board.id}`)}>
+    <div className="board-grid">
+      {order.map((b) => (
+        <BoardCard
+          key={b.id} board={b} onDelete={() => onDelete(b)}
+          dragging={dragId === b.id}
+          drag={{
+            draggable: order.length > 1,
+            onDragStart: (e) => {
+              startOrder.current = order;
+              setDragId(b.id);
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', b.id);
+            },
+            onDragEnter: () => moveTo(b.id),
+            onDragOver: (e) => { if (dragId) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } },
+            onDrop: (e) => e.preventDefault(),
+            onDragEnd: finish,
+          }}
+        />
+      ))}
+      <button className="board-card new" onClick={onNew}>
+        <IconPlus /> New board
+      </button>
+    </div>
+  );
+}
+
+function BoardCard({ board, onDelete, deleteLabel = 'Delete board', drag, dragging = false }: {
+  board: Board; onDelete: () => void; deleteLabel?: string; drag?: HTMLAttributes<HTMLDivElement>; dragging?: boolean;
+}) {
+  return (
+    <div className={`board-card${dragging ? ' dragging' : ''}`} onClick={() => navigate(`/b/${board.id}`)} {...drag}>
       <div className="thumb" />
       <div className="board-meta">
         <div className="board-title">{board.title}</div>

@@ -45,3 +45,6 @@
   border-radius: 50%; color: #fff; display: grid; place-items: center; font-weight: 700;
   border: 2px solid #fff; flex-shrink: 0; user-select: none;
 }
+.board-card[draggable='true'] { cursor: grab; }
+.board-card[draggable='true']:active { cursor: grabbing; }
+.board-card.dragging { opacity: .35; transform: scale(.97); box-shadow: none; border-style: dashed; border-color: var(--blue); }

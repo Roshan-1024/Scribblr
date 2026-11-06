@@ -7,6 +7,7 @@ export type Board = {
   title: string;
   share_code: string;
   locked: boolean;
+  position?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -17,13 +18,14 @@ function check<T>(r: { data: T | null; error: { message: string } | null }): T {
   return r.data as T;
 }
 
-const byDate = (a: { created_at: string }, b: { created_at: string }) => a.created_at.localeCompare(b.created_at);
+const byOrder = (a: Board, b: Board) =>
+  (a.position ?? Infinity) - (b.position ?? Infinity) || a.created_at.localeCompare(b.created_at);
 
 export async function listProjects(userId: string): Promise<Project[]> {
   const rows = check(
     await supabase.from('projects').select('*, boards(*)').eq('owner_id', userId).order('created_at'),
   ) as Project[];
-  rows.forEach((p) => p.boards.sort(byDate));
+  rows.forEach((p) => p.boards.sort(byOrder));
   return rows;
 }
 
@@ -47,6 +49,17 @@ export async function deleteProject(id: string) {
 export async function createBoard(projectId: string, title = 'Untitled board'): Promise<Board> {
   return check(await supabase.from('boards').insert({ project_id: projectId, title }).select().single()) as Board;
 }
+/** Persist a new order of boards within a project (drag and drop). */
+export async function reorderBoards(projectId: string, ids: string[]) {
+  const { error } = await supabase.rpc('reorder_boards', { p: projectId, ids });
+  if (error) {
+    if (/reorder_boards|function|schema cache/i.test(error.message)) {
+      throw new Error('Reordering needs a database update: run supabase/migrations/004_board_order.sql in Supabase.');
+    }
+    throw error;
+  }
+}
+
 export async function getBoard(id: string): Promise<Board | null> {
   return check(await supabase.from('boards').select('*').eq('id', id).maybeSingle()) as Board | null;
 }
