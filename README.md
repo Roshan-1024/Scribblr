@@ -49,7 +49,11 @@ Pen tablets work out of the box. The pen's eraser end erases, and touch is ignor
 ## Supabase setup (admin, once)
 
 1. Create a free project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, paste all of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**. Change the `admin_email` at the top first if needed. The admin account has no limits; everyone else gets 100 projects and 10 boards per project, which you can change in the `app_settings` table.
+2. In **SQL Editor**, paste all of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**. Then choose the admin email (no email is stored in the repo):
+   ```sql
+   update public.app_settings set admin_email = 'you@example.com' where id = 1;
+   ```
+   Sign up in Scribblr with that email to get the admin account. It has no limits; everyone else gets 100 projects and 10 boards per project, which you can change in the `app_settings` table.
 3. Run `scribblr --config` and paste the **Project URL** and **publishable key** (Project Settings → API Keys). They're stored in the git-ignored `scribblr.config.json` (format: [`scribblr.config.example.json`](scribblr.config.example.json)). Share them with collaborators privately, never through the repo. Never use the `service_role`/secret key here.
 4. In **Authentication → Sign In / Providers → Email**, decide on **Confirm email**. Supabase's built-in email service only sends a few emails per hour, so either turn confirmation off or add your own SMTP server.
 5. In **Authentication → Rate Limits**, adjust the sign-up limit if needed. The app also enforces a 1-minute cooldown between sign-ups on each device.
