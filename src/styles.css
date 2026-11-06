@@ -50,8 +50,8 @@ input, textarea { font: inherit; color: inherit; }
 .icon-btn:hover { background: var(--hover); }
 .icon-btn.active { background: var(--blue-soft); color: var(--blue); }
 .icon-btn:disabled { opacity: .35; cursor: default; background: transparent; }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; letter-spacing: -.2px; }
-.brand img { width: 28px; height: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; letter-spacing: -.3px; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; }
 .muted { color: var(--muted); }
 .error { color: var(--danger); font-size: 13px; }
 .center-screen { height: 100%; display: grid; place-items: center; background: var(--canvas); }

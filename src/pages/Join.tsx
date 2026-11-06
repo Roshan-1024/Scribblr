@@ -14,7 +14,7 @@ export default function Join({ code }: { code: string }) {
   return (
     <div className="center-screen">
       <div className="panel" style={{ padding: 32, textAlign: 'center', maxWidth: 420 }}>
-        <div className="brand" style={{ justifyContent: 'center' }}><img src="/logo.svg" alt="" />Scribblr</div>
+        <div className="brand" style={{ justifyContent: 'center' }}><img src="/mark.svg" alt="" />Scribblr</div>
         {error ? (
           <>
             <p className="error" style={{ fontSize: 14 }}>{error}</p>

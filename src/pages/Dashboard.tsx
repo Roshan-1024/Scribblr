@@ -42,7 +42,7 @@ export default function Dashboard({ profile }: { profile: Profile }) {
   return (
     <div className="dash">
       <header className="dash-head">
-        <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
+        <div className="brand"><img src="/mark.svg" alt="" />Scribblr</div>
         <div className="dash-user">
           <button className="user-btn" title="Account settings" onClick={() => setSettings(true)}>
             <Avatar name={profile.display_name} color={profile.color} admin={profile.is_admin} />

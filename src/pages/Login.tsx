@@ -43,7 +43,7 @@ export default function Login({ joining = false }: { joining?: boolean }) {
   return (
     <div className="login-wrap">
       <form className="login-card panel" onSubmit={submit}>
-        <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
+        <div className="brand"><img src="/mark.svg" alt="" />Scribblr</div>
         <h1>{mode === 'in' ? 'Welcome back' : 'Create your account'}</h1>
         {joining && <div className="info">Sign in or create an account to join the shared board.</div>}
         {mode === 'up' && (

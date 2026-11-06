@@ -6,6 +6,8 @@
     var(--canvas);
 }
 .login-card { width: 100%; max-width: 380px; padding: 32px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-lg); }
+.login-card .brand { font-size: 22px; }
+.login-card .brand img { width: 44px; height: 44px; border-radius: 11px; }
 .login-card h1 { font-size: 22px; margin: 8px 0 4px; letter-spacing: -.3px; }
 .login-card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .login-card .btn { padding: 11px; margin-top: 4px; }

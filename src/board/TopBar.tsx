@@ -34,7 +34,7 @@ export default function TopBar({ board, userId, isOwner, onRename, onToggleLock,
 
   return (
     <div className="topbar panel">
-      <div className="brand" title="Dashboard" onClick={() => navigate('/')}><img src="/logo.svg" alt="" />Scribblr</div>
+      <div className="brand" title="Dashboard" onClick={() => navigate('/')}><img src="/mark.svg" alt="" />Scribblr</div>
       <div className="top-sep" />
       <InlineEdit className="board-name" value={board.title} onSave={onRename} disabled={!isOwner} />
       <div className="top-sep" />

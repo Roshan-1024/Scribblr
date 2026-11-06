@@ -11,7 +11,7 @@ export default function App() {
   const auth = useAuth();
   const route = useRoute();
   if (!isConfigured) return <Setup />;
-  if (auth.status === 'loading') return <div className="center-screen"><div className="brand"><img src="/logo.svg" alt="" />Scribblr</div></div>;
+  if (auth.status === 'loading') return <div className="center-screen"><div className="brand"><img src="/mark.svg" alt="" />Scribblr</div></div>;
   if (auth.status === 'signed-out') return <Login joining={route.name === 'join'} />;
   const { profile } = auth;
   switch (route.name) {
