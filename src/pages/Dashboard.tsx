@@ -9,12 +9,14 @@ import { navigate } from '../router';
 import Avatar from '../components/Avatar';
 import { IconLogout, IconPlus, IconTrash } from '../components/Icons';
 import InlineEdit from '../components/InlineEdit';
+import AccountSettings from '../components/AccountSettings';
 import './dashboard.css';
 
 export default function Dashboard({ profile }: { profile: Profile }) {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [shared, setShared] = useState<Board[]>([]);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -39,8 +41,10 @@ export default function Dashboard({ profile }: { profile: Profile }) {
       <header className="dash-head">
         <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
         <div className="dash-user">
-          <Avatar name={profile.display_name} color={profile.color} />
-          <span>{profile.display_name}{profile.is_admin && <span className="badge">admin</span>}</span>
+          <button className="user-btn" title="Account settings" onClick={() => setSettings(true)}>
+            <Avatar name={profile.display_name} color={profile.color} />
+            <span>{profile.display_name}{profile.is_admin && <span className="badge">admin</span>}</span>
+          </button>
           <button className="icon-btn" title="Sign out" onClick={() => supabase.auth.signOut()}><IconLogout /></button>
         </div>
       </header>
@@ -90,6 +94,7 @@ export default function Dashboard({ profile }: { profile: Profile }) {
           </section>
         )}
       </main>
+      {settings && <AccountSettings profile={profile} onClose={() => setSettings(false)} />}
     </div>
   );
 }

@@ -107,9 +107,6 @@
 }
 
 /* ---------- share dialog ---------- */
-.modal-bg { position: fixed; inset: 0; background: rgba(5,0,56,.25); z-index: 50; display: grid; place-items: center; padding: 16px; }
-.modal { width: 100%; max-width: 440px; padding: 24px; box-shadow: var(--shadow-lg); }
-.modal h3 { margin: 0 0 6px; }
 .cmd {
   display: flex; align-items: center; gap: 8px; margin: 14px 0 8px; padding: 10px 12px; border-radius: 8px;
   background: #0f0d2e; color: #e8e8ff; font-family: ui-monospace, 'JetBrains Mono', monospace; font-size: 14px;
