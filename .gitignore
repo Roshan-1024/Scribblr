@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.scribblr/
+*.log
+.DS_Store

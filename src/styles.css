@@ -1,0 +1,57 @@
+:root {
+  --yellow: #ffd02f;
+  --yellow-soft: #fff6d1;
+  --blue: #4262ff;
+  --blue-hover: #3150f0;
+  --blue-soft: #eef0ff;
+  --ink: #050038;
+  --ink-2: #3b3a4f;
+  --muted: #7c7b8f;
+  --line: #e6e6ef;
+  --bg: #ffffff;
+  --canvas: #fafafa;
+  --panel: #ffffff;
+  --hover: #f1f1f6;
+  --danger: #e5484d;
+  --shadow: 0 2px 8px rgba(5, 0, 56, 0.08), 0 0 1px rgba(5, 0, 56, 0.16);
+  --shadow-lg: 0 8px 28px rgba(5, 0, 56, 0.14), 0 0 1px rgba(5, 0, 56, 0.2);
+  --radius: 12px;
+  font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; background: var(--bg); }
+button { font: inherit; color: inherit; cursor: pointer; }
+input { font: inherit; color: inherit; }
+
+/* ---------- generic controls ---------- */
+.btn {
+  border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 600;
+  background: var(--blue); color: #fff; transition: background .12s;
+}
+.btn:hover { background: var(--blue-hover); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.ghost:hover { background: var(--hover); }
+.btn.danger { background: transparent; color: var(--danger); }
+.btn.danger:hover { background: #fdecec; }
+.input {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  outline: none; background: #fff;
+}
+.input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+.panel { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
+.icon-btn {
+  width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent;
+  display: grid; place-items: center; color: var(--ink-2); transition: background .1s;
+}
+.icon-btn:hover { background: var(--hover); }
+.icon-btn.active { background: var(--blue-soft); color: var(--blue); }
+.icon-btn:disabled { opacity: .35; cursor: default; background: transparent; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 17px; letter-spacing: -.2px; }
+.brand img { width: 28px; height: 28px; }
+.muted { color: var(--muted); }
+.error { color: var(--danger); font-size: 13px; }
+.center-screen { height: 100%; display: grid; place-items: center; background: var(--canvas); }
