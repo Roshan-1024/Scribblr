@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# Scribblr launcher for Linux / macOS.
+#   scribblr            start Scribblr and open the dashboard
+#   scribblr <hash>     join a shared whiteboard
+#   scribblr --update   download the latest version
+set -euo pipefail
+
+# Resolve the real app directory (this script is usually symlinked into ~/.local/bin)
+SRC="${BASH_SOURCE[0]}"
+while [ -L "$SRC" ]; do
+  DIR="$(cd -P "$(dirname "$SRC")" && pwd)"; SRC="$(readlink "$SRC")"
+  [[ $SRC != /* ]] && SRC="$DIR/$SRC"
+done
+APP_DIR="$(cd -P "$(dirname "$SRC")/.." && pwd)"
+cd "$APP_DIR"
+
+PORT="${SCRIBBLR_PORT:-5173}"
+NODE_VERSION="22.11.0"
+LOCAL="$APP_DIR/.scribblr"
+mkdir -p "$LOCAL"
+
+log() { printf '\033[1;34m[scribblr]\033[0m %s\n' "$*"; }
+die() { printf '\033[1;31m[scribblr]\033[0m %s\n' "$*" >&2; exit 1; }
+
+fetch() { # url dest
+  if command -v curl >/dev/null; then curl -fsSL "$1" -o "$2"
+  elif command -v wget >/dev/null; then wget -q "$1" -O "$2"
+  else die "Need curl or wget to download Node.js."; fi
+}
+
+ensure_node() {
+  if command -v node >/dev/null && [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 20 ]; then return; fi
+  local nd="$LOCAL/node"
+  if [ ! -x "$nd/bin/node" ]; then
+    local os arch
+    case "$(uname -s)" in Linux) os=linux ;; Darwin) os=darwin ;; *) die "Unsupported OS" ;; esac
+    case "$(uname -m)" in x86_64|amd64) arch=x64 ;; aarch64|arm64) arch=arm64 ;; *) die "Unsupported CPU" ;; esac
+    log "Downloading Node.js $NODE_VERSION (one-time)..."
+    local tgz="$LOCAL/node.tar.gz"
+    fetch "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-$os-$arch.tar.gz" "$tgz"
+    rm -rf "$nd" && mkdir -p "$nd" && tar -xzf "$tgz" -C "$nd" --strip-components=1 && rm -f "$tgz"
+  fi
+  export PATH="$nd/bin:$PATH"
+}
+
+hash_file() { if command -v sha1sum >/dev/null; then sha1sum "$1" | cut -d' ' -f1; else shasum "$1" | cut -d' ' -f1; fi; }
+
+ensure_deps() {
+  local want; want="$(hash_file package-lock.json)"
+  if [ ! -d node_modules ] || [ "$(cat "$LOCAL/deps.stamp" 2>/dev/null)" != "$want" ]; then
+    log "Installing dependencies..."
+    npm ci --no-audit --no-fund --loglevel=error >"$LOCAL/npm.log" 2>&1 || { cat "$LOCAL/npm.log"; die "npm install failed"; }
+    echo "$want" >"$LOCAL/deps.stamp"
+  fi
+}
+
+ensure_build() {
+  if [ ! -f dist/index.html ] || [ -n "$(find src public index.html package-lock.json scribblr.config.json -newer dist/index.html 2>/dev/null | head -1)" ]; then
+    log "Building Scribblr..."
+    npx vite build --logLevel error >"$LOCAL/build.log" 2>&1 || { cat "$LOCAL/build.log"; die "Build failed"; }
+  fi
+}
+
+check_update() { # prints only when an update exists
+  command -v git >/dev/null && [ -d .git ] || return 0
+  ( timeout 5 git fetch -q 2>/dev/null || exit 0
+    n="$(git rev-list --count HEAD..@{u} 2>/dev/null || echo 0)"
+    [ "$n" -gt 0 ] && log "Update available. Run: scribblr --update" ) &
+}
+
+open_url() {
+  if command -v wslview >/dev/null; then wslview "$1"
+  elif command -v xdg-open >/dev/null; then xdg-open "$1" >/dev/null 2>&1
+  elif command -v open >/dev/null; then open "$1"
+  else log "Open $1 in your browser"; fi
+}
+
+is_running() {
+  if command -v curl >/dev/null; then [ "$(curl -fs --max-time 1 "http://127.0.0.1:$PORT/__scribblr" 2>/dev/null)" = scribblr ]
+  else node -e "fetch('http://127.0.0.1:$PORT/__scribblr').then(r=>r.text()).then(t=>process.exit(t==='scribblr'?0:1)).catch(()=>process.exit(1))"; fi
+}
+
+case "${1:-}" in
+  -h|--help)
+    echo "Usage: scribblr [board-hash] | --update"; exit 0 ;;
+  --update)
+    command -v git >/dev/null || die "git is required to update"
+    log "Updating..."; git pull --ff-only -q || die "Update failed (local changes?)"
+    ensure_node; ensure_deps; ensure_build; log "Updated to $(git rev-parse --short HEAD)."; exit 0 ;;
+  --prepare)
+    ensure_node; ensure_deps; ensure_build; exit 0 ;;
+esac
+
+URL="http://localhost:$PORT/#/"
+if [ -n "${1:-}" ]; then
+  [[ "$1" =~ ^[A-Za-z0-9_-]{4,64}$ ]] || die "Invalid board hash: $1"
+  URL="http://localhost:$PORT/#/join/$1"
+fi
+
+ensure_node
+ensure_deps
+ensure_build
+check_update
+
+if is_running; then
+  log "Scribblr is already running."
+  open_url "$URL"; exit 0
+fi
+
+SCRIBBLR_PORT="$PORT" node server/serve.mjs &
+SERVER=$!
+trap 'kill $SERVER 2>/dev/null' INT TERM EXIT
+for _ in $(seq 1 50); do is_running && break; sleep 0.1; done
+open_url "$URL"
+wait $SERVER
