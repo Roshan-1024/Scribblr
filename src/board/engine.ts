@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import {
-  computeBBox, LOCAL_ORIGIN, strokesOf, uid, type BrushStyle, type Stroke, type Tool,
+  computeBBox, DEFAULT_HL, DEFAULT_PEN, LOCAL_ORIGIN, strokesOf, uid, type BrushStyle, type Stroke, type Tool,
 } from './types';
 import { intersects, pointInPolygon, SpatialGrid, strokeHit, tracePath, union, type BBox } from './geometry';
 
@@ -63,8 +63,8 @@ export class BoardEngine {
   private remoteLive = new Map<string, LiveStroke>();
 
   tool: Tool = 'pen';
-  penStyle: BrushStyle = { color: '#1a1a2e', width: 3.5 };
-  hlStyle: BrushStyle = { color: '#ffd02f', width: 20 };
+  penStyle: BrushStyle = { ...DEFAULT_PEN };
+  hlStyle: BrushStyle = { ...DEFAULT_HL };
   private readOnly = false;
   private userId = '';
   private ro: ResizeObserver;

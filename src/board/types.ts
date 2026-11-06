@@ -23,10 +23,19 @@ export function strokesOf(doc: Y.Doc): Y.Map<Stroke> {
   return doc.getMap<Stroke>('strokes');
 }
 
-export const PEN_COLORS = ['#1a1a2e', '#4262ff', '#e5484d', '#12b76a', '#f79009', '#9e77ed'];
-export const PEN_WIDTHS = [2, 3.5, 6, 10];
-export const HL_COLORS = ['#ffd02f', '#7ce38b', '#ff8fd4', '#7fd3ff', '#ffb067'];
-export const HL_WIDTHS = [12, 20, 32];
+/** Colour palette (same colours as Miro's pen palette), in display order: 5 per row. */
+export const PALETTE = [
+  '#FFF6B6', '#FFDC4A', '#AF7E04', '#FFFFFF', '#F8D3AF',
+  '#FE9F4D', '#9B4A08', '#E7E7E7', '#FFC6C6', '#FF6464',
+  '#BD0A0A', '#B0B0B0', '#ADF0C7', '#2DC75C', '#067429',
+  '#595959', '#C6DCFF', '#659DF2', '#305BAB', '#1A1A1A',
+  '#DEDAFF', '#8F7FEE', '#6631D7',
+];
+/** Thickness slider ranges (world units). */
+export const PEN_RANGE = { min: 1, max: 24 };
+export const HL_RANGE = { min: 6, max: 48 };
+export const DEFAULT_PEN: BrushStyle = { color: '#1A1A1A', width: 4 };
+export const DEFAULT_HL: BrushStyle = { color: '#FFDC4A', width: 20 };
 
 export function computeBBox(p: number[], w: number): Stroke['b'] {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;

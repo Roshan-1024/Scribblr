@@ -6,13 +6,6 @@ const base = ({ size = 20, ...p }: P) => ({
   strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, ...p,
 });
 
-export const IconSelect = (p: P) => <svg {...base(p)}><path d="M5 3l14 8-6 1.5L10 19z" /></svg>;
-export const IconPen = (p: P) => <svg {...base(p)}><path d="M4 20l1-4L16 5l3 3L8 19z" /><path d="M14 7l3 3" /></svg>;
-export const IconHighlighter = (p: P) => <svg {...base(p)}><path d="M9 14l-4 4v2h5l4-4" /><path d="M9 14l7-9 4 4-9 7z" /></svg>;
-export const IconEraser = (p: P) => <svg {...base(p)}><path d="M16 4l5 5-10 10H6l-3-3z" /><path d="M11 9l5 5M6 19h14" /></svg>;
-export const IconLasso = (p: P) => <svg {...base(p)}><ellipse cx="12" cy="9" rx="8" ry="5" strokeDasharray="3 2.5" /><path d="M7 13c-1 2 0 4 2 4s2 3 0 4" /></svg>;
-export const IconUndo = (p: P) => <svg {...base(p)}><path d="M9 14L4 9l5-5" /><path d="M4 9h11a5 5 0 010 10h-3" /></svg>;
-export const IconRedo = (p: P) => <svg {...base(p)}><path d="M15 14l5-5-5-5" /><path d="M20 9H9a5 5 0 000 10h3" /></svg>;
 export const IconLock = (p: P) => <svg {...base(p)}><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></svg>;
 export const IconUnlock = (p: P) => <svg {...base(p)}><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 017.5-2" /></svg>;
 export const IconChevronDown = (p: P) => <svg {...base({ size: 16, ...p })}><path d="M6 9l6 6 6-6" /></svg>;

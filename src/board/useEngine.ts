@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type * as Y from 'yjs';
 import { BoardEngine, type EngineEvents } from './engine';
-import type { BrushStyle, Tool } from './types';
+import { DEFAULT_HL, DEFAULT_PEN, type BrushStyle, type Tool } from './types';
 
 const PREFS_KEY = 'scribblr-tools';
 type Prefs = { tool: Tool; pen: BrushStyle; hl: BrushStyle };
 
 function loadPrefs(): Prefs {
-  const def: Prefs = { tool: 'pen', pen: { color: '#1a1a2e', width: 3.5 }, hl: { color: '#ffd02f', width: 20 } };
+  const def: Prefs = { tool: 'pen', pen: DEFAULT_PEN, hl: DEFAULT_HL };
   try { return { ...def, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') }; } catch { return def; }
 }
 
