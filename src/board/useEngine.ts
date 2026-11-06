@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type * as Y from 'yjs';
-import { BoardEngine } from './engine';
+import { BoardEngine, type EngineEvents } from './engine';
 import type { BrushStyle, Tool } from './types';
 
 const PREFS_KEY = 'scribblr-tools';
@@ -12,7 +12,12 @@ function loadPrefs(): Prefs {
 }
 
 /** Mounts a BoardEngine into `rootRef` and mirrors its state into React. */
-export function useEngine(rootRef: React.RefObject<HTMLDivElement>, doc: Y.Doc | null, boardId: string) {
+export function useEngine(
+  rootRef: React.RefObject<HTMLDivElement>,
+  doc: Y.Doc | null,
+  boardId: string,
+  extra?: React.MutableRefObject<Pick<EngineEvents, 'onPointer' | 'onLiveStroke'>>,
+) {
   const engineRef = useRef<BoardEngine | null>(null);
   const [prefs, setPrefs] = useState<Prefs>(loadPrefs);
   const [zoom, setZoom] = useState(1);
@@ -28,6 +33,8 @@ export function useEngine(rootRef: React.RefObject<HTMLDivElement>, doc: Y.Doc |
       onHistory: (canUndo, canRedo) => setHist({ canUndo, canRedo }),
       onSelection: setSelCount,
       onToolKey: (t) => setPrefs((p) => ({ ...p, tool: t })),
+      onPointer: (w) => extra?.current.onPointer?.(w),
+      onLiveStroke: (st) => extra?.current.onLiveStroke?.(st),
       onCamera: (c) => {
         clearTimeout(camTimer);
         camTimer = window.setTimeout(() => { try { localStorage.setItem(camKey, JSON.stringify(c)); } catch { /* ignore */ } }, 300);
@@ -39,7 +46,7 @@ export function useEngine(rootRef: React.RefObject<HTMLDivElement>, doc: Y.Doc |
     } catch { /* ignore */ }
     engineRef.current = eng;
     return () => { clearTimeout(camTimer); eng.destroy(); engineRef.current = null; };
-  }, [rootRef, doc, boardId]);
+  }, [rootRef, doc, boardId, extra]);
 
   // push prefs into engine + persist
   useEffect(() => {

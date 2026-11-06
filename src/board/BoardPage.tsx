@@ -9,6 +9,9 @@ import ZoomControls from './ZoomControls';
 import TopBar from './TopBar';
 import { useEngine } from './useEngine';
 import { BoardPersistence, saveLabel, type SaveState } from './persistence';
+import { BoardCollab, type Peer } from './collab';
+import type { EngineEvents, RemoteCursor } from './engine';
+import Presence from './Presence';
 import './board.css';
 
 export default function BoardPage({ boardId, profile }: { boardId: string; profile: Profile }) {
@@ -51,7 +54,31 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
     return () => { alive = false; supabase.removeChannel(ch); };
   }, [boardId]);
 
-  const ui = useEngine(rootRef, board ? doc : null, boardId);
+  // real-time collaboration
+  const [peers, setPeers] = useState<Peer[]>([]);
+  const collabRef = useRef<BoardCollab | null>(null);
+  const cursorsRef = useRef(new Map<string, RemoteCursor>());
+  const engineEvents = useRef<Pick<EngineEvents, 'onPointer' | 'onLiveStroke'>>({
+    onPointer: (w) => collabRef.current?.sendCursor(w),
+    onLiveStroke: (st) => collabRef.current?.sendLive(st),
+  });
+  const ui = useEngine(rootRef, board ? doc : null, boardId, engineEvents);
+  const hasBoard = !!board;
+  useEffect(() => {
+    if (!hasBoard || !persistRef.current) return;
+    const c = new BoardCollab(boardId, doc, { id: profile.id, name: profile.display_name, color: profile.color }, persistRef.current.ready);
+    c.onPeers = setPeers;
+    c.onCursors = (m) => { cursorsRef.current = m; ui.engine.current?.setRemoteCursors(m); };
+    c.onLive = (k, st) => ui.engine.current?.setRemoteLive(k, st);
+    collabRef.current = c;
+    return () => { collabRef.current = null; c.destroy(); setPeers([]); };
+  }, [hasBoard, boardId, doc, profile.id, profile.display_name, profile.color, ui.engine]);
+
+  const follow = (key: string) => {
+    const c = cursorsRef.current.get(key);
+    if (c) ui.engine.current?.centerOn(c.x, c.y);
+    else showError('Their cursor is not on the board right now');
+  };
   const isOwner = board?.owner_id === profile.id;
   const locked = !!board?.locked;
 
@@ -89,6 +116,7 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
     <div className="board-page">
       <div className="wb-root" ref={rootRef} />
       <TopBar board={board} userId={profile.id} isOwner={isOwner} onRename={rename} onToggleLock={toggleLock} onError={showError} saveState={saveLabel(saveState)} />
+      <Presence me={profile} peers={peers} shareCode={board.share_code} onFollow={follow} />
       {locked && <div className="lock-banner"><IconLock size={14} /> Board is locked{isOwner ? ' — unlock to edit' : ' by the owner'}</div>}
       <Toolbar
         tool={ui.tool} setTool={ui.setTool}

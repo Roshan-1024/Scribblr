@@ -162,6 +162,12 @@ export class BoardEngine {
     if (animate) this.animateTo(to); else { this.cam = to; this.camChanged(); }
   }
 
+  /** Animate so the world point (x, y) is at the centre of the screen. */
+  centerOn(x: number, y: number) {
+    const z = this.cam.z;
+    this.animateTo({ z, x: this.W / 2 - x * z, y: this.H / 2 - y * z });
+  }
+
   zoomStep(dir: 1 | -1) {
     const steps = [0.05, 0.1, 0.15, 0.25, 0.33, 0.5, 0.67, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8];
     const z = this.anim ? this.anim.to.z : this.cam.z;
