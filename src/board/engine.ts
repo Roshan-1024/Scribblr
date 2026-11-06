@@ -55,6 +55,8 @@ export class BoardEngine {
   private g: Gesture | null = null;
   private touches = new Map<number, { x: number; y: number }>();
   private lastPen = 0;
+  private lastPointerType = '';
+  private lastPenUndo = 0;
   private spaceDown = false;
   private predicted: number[] = [];
   private hover: { x: number; y: number } | null = null;
@@ -150,6 +152,14 @@ export class BoardEngine {
   get zoom() { return this.cam.z; }
   getCamera(): Cam { return { ...this.cam }; }
   setCamera(c: Cam) { this.cam = { ...c, z: clampZoom(c.z) }; this.camChanged(); }
+
+  /** Undo from the stylus button; one press may produce both pointerdown and contextmenu, so debounce. */
+  private penButtonUndo() {
+    const now = performance.now();
+    if (now - this.lastPenUndo < 350) return;
+    this.lastPenUndo = now;
+    this.doUndo();
+  }
 
   doUndo() { if (this.readOnly) return; this.cancelGesture(); this.undo.undo(); }
   doRedo() { if (this.readOnly) return; this.cancelGesture(); this.undo.redo(); }
@@ -470,13 +480,15 @@ export class BoardEngine {
       if (e.pointerType !== 'touch') { this.hover = null; this.ev.onPointer?.(null); this.overDirty = true; this.schedule(); }
     });
     on(el, 'wheel', (e: WheelEvent) => this.wheel(e), { passive: false });
-    on(el, 'contextmenu', (e: Event) => e.preventDefault());
+    // Stylus upper barrel button usually arrives as a right-click; some drivers only send 'contextmenu'.
+    on(el, 'contextmenu', (e: Event) => { e.preventDefault(); if (this.lastPointerType === 'pen') this.penButtonUndo(); });
     on(window, 'keydown', (e: KeyboardEvent) => this.key(e, true));
     on(window, 'keyup', (e: KeyboardEvent) => this.key(e, false));
     on(window, 'blur', () => { this.spaceDown = false; this.updateCursor(); });
   }
 
   private down(e: PointerEvent) {
+    this.lastPointerType = e.pointerType;
     if (e.pointerType === 'pen') this.lastPen = performance.now();
     const pt = this.local(e);
 
@@ -491,7 +503,10 @@ export class BoardEngine {
     this.capture(e);
 
     if (e.button === 1 || this.spaceDown) { this.startPan(e.pointerId, pt); return; }
-    if (e.button === 2) return;
+    if (e.button === 2) {
+      if (e.pointerType === 'pen') this.penButtonUndo(); // stylus upper button → undo
+      return;
+    }
 
     // Pen eraser end (or eraser button) → erase regardless of tool
     const penEraser = e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32) !== 0);
@@ -556,6 +571,7 @@ export class BoardEngine {
   }
 
   private move(e: PointerEvent) {
+    this.lastPointerType = e.pointerType;
     const pt = this.local(e);
     if (e.pointerType === 'touch' && this.touches.has(e.pointerId)) this.touches.set(e.pointerId, pt);
     if (e.pointerType !== 'touch') {
