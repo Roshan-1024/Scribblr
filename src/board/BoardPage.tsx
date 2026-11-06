@@ -8,6 +8,7 @@ import Toolbar from './Toolbar';
 import ZoomControls from './ZoomControls';
 import TopBar from './TopBar';
 import { useEngine } from './useEngine';
+import { BoardPersistence, saveLabel, type SaveState } from './persistence';
 import './board.css';
 
 export default function BoardPage({ boardId, profile }: { boardId: string; profile: Profile }) {
@@ -15,7 +16,19 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
   const [toast, setToast] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const doc = useMemo(() => new Y.Doc(), [boardId]);
-  useEffect(() => () => doc.destroy(), [doc]);
+  const [saveState, setSaveState] = useState<SaveState>('loading');
+  const persistRef = useRef<BoardPersistence | null>(null);
+
+  // auto-save: IndexedDB instantly + Supabase debounced
+  useEffect(() => {
+    const p = new BoardPersistence(boardId, doc);
+    p.onState = setSaveState;
+    persistRef.current = p;
+    return () => {
+      persistRef.current = null;
+      p.destroy().finally(() => doc.destroy());
+    };
+  }, [boardId, doc]);
 
   const showError = useCallback((m: string) => setToast(m), []);
   useEffect(() => {
@@ -43,7 +56,10 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
   const locked = !!board?.locked;
 
   useEffect(() => { ui.engine.current?.setUser(profile.id); }, [ui.engine, profile.id, board?.id]);
-  useEffect(() => { ui.engine.current?.setReadOnly(locked); }, [ui.engine, locked, board?.id]);
+  useEffect(() => {
+    ui.engine.current?.setReadOnly(locked);
+    persistRef.current?.setWritable(!locked || isOwner);
+  }, [ui.engine, locked, isOwner, board?.id]);
 
   if (board === undefined) return <div className="board-page wb-root" />;
   if (board === null) {
@@ -72,7 +88,7 @@ export default function BoardPage({ boardId, profile }: { boardId: string; profi
   return (
     <div className="board-page">
       <div className="wb-root" ref={rootRef} />
-      <TopBar board={board} userId={profile.id} isOwner={isOwner} onRename={rename} onToggleLock={toggleLock} onError={showError} />
+      <TopBar board={board} userId={profile.id} isOwner={isOwner} onRename={rename} onToggleLock={toggleLock} onError={showError} saveState={saveLabel(saveState)} />
       {locked && <div className="lock-banner"><IconLock size={14} /> Board is locked{isOwner ? ' — unlock to edit' : ' by the owner'}</div>}
       <Toolbar
         tool={ui.tool} setTool={ui.setTool}
