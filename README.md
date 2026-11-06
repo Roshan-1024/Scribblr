@@ -18,6 +18,8 @@ install.cmd
 
 The installer adds the `scribblr` command to your PATH. Node.js and all dependencies are downloaded automatically if they're missing.
 
+On first run it asks for the **Supabase URL and publishable key**; get them from the Scribblr admin. They are saved to `scribblr.config.json` on your machine, which is git-ignored and never committed. Run `scribblr --config` to change them.
+
 ## Use
 
 | Command | What it does |
@@ -25,6 +27,7 @@ The installer adds the `scribblr` command to your PATH. Node.js and all dependen
 | `scribblr` | Start Scribblr and open the dashboard in your browser |
 | `scribblr <hash>` | Join a shared whiteboard (the board owner gets the hash from **Share**) |
 | `scribblr --update` | Download the latest version (Scribblr tells you when one is available) |
+| `scribblr --config` | Re-enter the Supabase URL and key |
 
 Press `Ctrl+C` in the terminal to stop it. To use a different port, set `SCRIBBLR_PORT`, e.g. `SCRIBBLR_PORT=6000 scribblr`.
 
@@ -47,7 +50,7 @@ Pen tablets work out of the box. The pen's eraser end erases, and touch is ignor
 
 1. Create a free project at [supabase.com](https://supabase.com).
 2. In **SQL Editor**, paste all of [`supabase/schema.sql`](supabase/schema.sql) and click **Run**. Change the `admin_email` at the top first if needed. The admin account has no limits; everyone else gets 100 projects and 10 boards per project, which you can change in the `app_settings` table.
-3. In **Project Settings → API**, copy the **Project URL** and the **anon public** key into [`scribblr.config.json`](scribblr.config.json). The anon key is designed to be public, and access is protected by row-level security.
+3. Run `scribblr --config` and paste the **Project URL** and **publishable key** (Project Settings → API Keys). They're stored in the git-ignored `scribblr.config.json` (format: [`scribblr.config.example.json`](scribblr.config.example.json)). Share them with collaborators privately, never through the repo. Never use the `service_role`/secret key here.
 4. In **Authentication → Sign In / Providers → Email**, decide on **Confirm email**. Supabase's built-in email service only sends a few emails per hour, so either turn confirmation off or add your own SMTP server.
 5. In **Authentication → Rate Limits**, adjust the sign-up limit if needed. The app also enforces a 1-minute cooldown between sign-ups on each device.
 

@@ -49,6 +49,18 @@ function Ensure-Deps {
   }
 }
 
+# Supabase keys live in scribblr.config.json, which is NOT in git. Ask for them on first run.
+function Ensure-Config([switch]$Force) {
+  $f = Join-Path $AppDir 'scribblr.config.json'
+  if (-not $Force -and (Test-Path $f) -and ((Get-Content $f -Raw) -match '"supabaseUrl":\s*"https://')) { return }
+  Log 'First-time setup: enter the Supabase details (ask the Scribblr admin for them).'
+  do { $url = (Read-Host '  Supabase URL (https://xxxx.supabase.co)').Trim() } until ($url -match '^https://[A-Za-z0-9.-]+$')
+  do { $key = (Read-Host '  Supabase publishable/anon key').Trim() } until ($key -match '^[A-Za-z0-9._-]{20,}$')
+  $json = "{`n  `"supabaseUrl`": `"$url`",`n  `"supabaseAnonKey`": `"$key`"`n}`n"
+  [IO.File]::WriteAllText($f, $json)
+  Log 'Saved to scribblr.config.json (kept out of git).'
+}
+
 function Ensure-Build {
   $index = 'dist/index.html'
   $stale = -not (Test-Path $index)
@@ -80,13 +92,14 @@ function Check-Update {
 
 $arg = if ($args.Count -gt 0) { [string]$args[0] } else { '' }
 switch ($arg) {
-  { $_ -in '-h', '--help' } { 'Usage: scribblr [board-hash] | --update'; exit 0 }
+  { $_ -in '-h', '--help' } { 'Usage: scribblr [board-hash] | --update | --config'; exit 0 }
+  '--config' { Ensure-Config -Force; exit 0 }
   '--update' {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Die 'git is required to update' }
     Log 'Updating...'; git pull --ff-only -q; if ($LASTEXITCODE -ne 0) { Die 'Update failed (local changes?)' }
-    Ensure-Node; Ensure-Deps; Ensure-Build; Log 'Updated.'; exit 0
+    Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; Log 'Updated.'; exit 0
   }
-  '--prepare' { Ensure-Node; Ensure-Deps; Ensure-Build; exit 0 }
+  '--prepare' { Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; exit 0 }
 }
 
 $Url = "http://localhost:$Port/#/"
@@ -95,7 +108,7 @@ if ($arg) {
   $Url = "http://localhost:$Port/#/join/$arg"
 }
 
-Ensure-Node; Ensure-Deps; Ensure-Build; Check-Update
+Ensure-Config; Ensure-Node; Ensure-Deps; Ensure-Build; Check-Update
 
 if (Test-Running) { Log 'Scribblr is already running.'; Start-Process $Url; exit 0 }
 

@@ -54,6 +54,19 @@ ensure_deps() {
   fi
 }
 
+# Supabase keys live in scribblr.config.json, which is NOT in git. Ask for them on first run.
+ensure_config() {
+  local f="$APP_DIR/scribblr.config.json"
+  if [ "${1:-}" != force ] && [ -f "$f" ] && grep -q '"supabaseUrl": *"https://' "$f"; then return; fi
+  [ -t 0 ] || die "Missing scribblr.config.json. Run 'scribblr --config' in a terminal."
+  log "First-time setup: enter the Supabase details (ask the Scribblr admin for them)."
+  local url key
+  while true; do read -rp "  Supabase URL (https://xxxx.supabase.co): " url; [[ $url =~ ^https://[A-Za-z0-9.-]+$ ]] && break; echo "  That doesn't look like a Supabase URL."; done
+  while true; do read -rp "  Supabase publishable/anon key: " key; [[ $key =~ ^[A-Za-z0-9._-]{20,}$ ]] && break; echo "  That doesn't look like a key."; done
+  printf '{\n  "supabaseUrl": "%s",\n  "supabaseAnonKey": "%s"\n}\n' "$url" "$key" >"$f"
+  log "Saved to scribblr.config.json (kept out of git)."
+}
+
 ensure_build() {
   if [ ! -f dist/index.html ] || [ -n "$(find src public index.html package-lock.json scribblr.config.json -newer dist/index.html 2>/dev/null | head -1)" ]; then
     log "Building Scribblr..."
@@ -82,13 +95,15 @@ is_running() {
 
 case "${1:-}" in
   -h|--help)
-    echo "Usage: scribblr [board-hash] | --update"; exit 0 ;;
+    echo "Usage: scribblr [board-hash] | --update | --config"; exit 0 ;;
+  --config)
+    ensure_config force; exit 0 ;;
   --update)
     command -v git >/dev/null || die "git is required to update"
     log "Updating..."; git pull --ff-only -q || die "Update failed (local changes?)"
-    ensure_node; ensure_deps; ensure_build; log "Updated to $(git rev-parse --short HEAD)."; exit 0 ;;
+    ensure_config; ensure_node; ensure_deps; ensure_build; log "Updated to $(git rev-parse --short HEAD)."; exit 0 ;;
   --prepare)
-    ensure_node; ensure_deps; ensure_build; exit 0 ;;
+    ensure_config; ensure_node; ensure_deps; ensure_build; exit 0 ;;
 esac
 
 URL="http://localhost:$PORT/#/"
@@ -97,6 +112,7 @@ if [ -n "${1:-}" ]; then
   URL="http://localhost:$PORT/#/join/$1"
 fi
 
+ensure_config
 ensure_node
 ensure_deps
 ensure_build

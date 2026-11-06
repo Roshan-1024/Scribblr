@@ -3,3 +3,4 @@ dist/
 .scribblr/
 *.log
 .DS_Store
+scribblr.config.json

@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import config from '../../scribblr.config.json';
+import config from 'scribblr-config';
 
-export const isConfigured = Boolean(config.supabaseUrl && config.supabaseAnonKey);
+export const isConfigured = Boolean(config.supabaseAnonKey && /^https:\/\/[^/]+$/.test(config.supabaseUrl) && !config.supabaseUrl.includes('YOUR-PROJECT'));
 
 export const supabase: SupabaseClient = createClient(
   config.supabaseUrl || 'http://localhost:54321',

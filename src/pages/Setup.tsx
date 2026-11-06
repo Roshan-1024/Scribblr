@@ -5,12 +5,9 @@ export default function Setup() {
       <div className="panel" style={{ maxWidth: 520, padding: 32, lineHeight: 1.6 }}>
         <div className="brand"><img src="/logo.svg" alt="" />Scribblr</div>
         <h2>Connect Supabase</h2>
-        <ol>
-          <li>Create a free project at <b>supabase.com</b>.</li>
-          <li>Run <code>supabase/schema.sql</code> in the SQL Editor.</li>
-          <li>Copy the Project URL and anon key (Project Settings → API) into <code>scribblr.config.json</code>.</li>
-          <li>Run <code>scribblr</code> again.</li>
-        </ol>
+        <p>Scribblr doesn't know which Supabase project to use yet. Stop it with <b>Ctrl+C</b> in the terminal, then run:</p>
+        <pre style={{ background: '#0f0d2e', color: '#e8e8ff', padding: '10px 12px', borderRadius: 8 }}>scribblr --config</pre>
+        <p className="muted">Ask the Scribblr admin for the Supabase URL and publishable key.</p>
       </div>
     </div>
   );
