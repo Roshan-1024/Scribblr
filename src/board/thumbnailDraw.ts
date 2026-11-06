@@ -4,7 +4,7 @@ export type ThumbStroke = { k: 'pen' | 'hl'; c: string; w: number; p: number[]; 
 
 export const THUMB_W = 560;
 export const THUMB_H = 240;
-const PAD = 16;
+const PAD = 28;
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 

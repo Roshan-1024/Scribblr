@@ -137,10 +137,10 @@ export class BoardPersistence {
     this.thumbTimer = window.setTimeout(() => this.uploadThumbnail(), wait);
   }
 
-  private uploadThumbnail() {
+  private uploadThumbnail(): Promise<void> {
     clearTimeout(this.thumbTimer);
     this.thumbTimer = 0;
-    if (!thumbnailsSupported) return;
+    if (!thumbnailsSupported) return Promise.resolve();
     this.lastThumb = Date.now();
     const job = renderThumbnail(this.doc)
       .then((t) => supabase.rpc('set_board_thumbnail', { b: this.boardId, t }))
@@ -150,6 +150,7 @@ export class BoardPersistence {
       .catch(() => { /* preview is optional */ });
     pendingThumbs.add(job);
     job.finally(() => pendingThumbs.delete(job));
+    return job;
   }
 
   private set(s: SaveState) {
@@ -165,8 +166,16 @@ export class BoardPersistence {
   };
 
   async destroy() {
-    await this.flush();
-    if (this.thumbTimer) this.uploadThumbnail(); // leaving the board: update its preview now
+    // Leaving the board: finish any in-flight save, save the rest, and refresh the preview.
+    // Registered synchronously, so the dashboard (mounting right now) waits for it.
+    const leaving = (async () => {
+      for (let i = 0; this.saving && i < 100; i++) await new Promise((r) => setTimeout(r, 50));
+      await this.flush();
+      if (this.thumbTimer) await this.uploadThumbnail();
+    })();
+    pendingThumbs.add(leaving);
+    leaving.finally(() => pendingThumbs.delete(leaving));
+    await leaving;
     this.destroyed = true;
     clearTimeout(this.timer);
     this.doc.off('update', this.onUpdate);
