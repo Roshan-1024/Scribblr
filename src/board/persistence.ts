@@ -46,20 +46,26 @@ export class BoardPersistence {
   }
 
   private async load() {
-    await this.idb.whenSynced;
+    // Show the cloud copy as soon as it arrives; don't wait for the local (IndexedDB) copy,
+    // which can take seconds to open on a fresh browser profile.
     const { data, error } = await supabase.from('board_docs').select('state').eq('board_id', this.boardId).maybeSingle();
     if (this.destroyed) return;
-    if (error) { this.set('offline'); return; }
     let remoteSV: Uint8Array | null = null;
-    if (data?.state) {
-      const remote = fromBase64(data.state);
-      remoteSV = Y.encodeStateVectorFromUpdate(remote);
-      Y.applyUpdate(this.doc, remote, DB_ORIGIN);
+    if (!error) {
+      if (data?.state) {
+        const remote = fromBase64(data.state);
+        remoteSV = Y.encodeStateVectorFromUpdate(remote);
+        Y.applyUpdate(this.doc, remote, DB_ORIGIN);
+      }
+      if (!this.dirty) this.set('saved');
     }
-    // Anything we have locally that the server doesn't (offline edits) → upload.
-    const missing = remoteSV ? Y.encodeStateAsUpdate(this.doc, remoteSV) : Y.encodeStateAsUpdate(this.doc);
-    if (missing.length > 2 && this.doc.getMap('strokes').size > 0) { this.dirty = true; this.schedule(0); }
-    else this.set('saved');
+    // In the background: once the local copy is open, upload anything only it has (offline edits).
+    this.idb.whenSynced.then(() => {
+      if (this.destroyed) return;
+      if (error) { this.set('offline'); return; }
+      const missing = remoteSV ? Y.encodeStateAsUpdate(this.doc, remoteSV) : Y.encodeStateAsUpdate(this.doc);
+      if (missing.length > 2 && this.doc.getMap('strokes').size > 0) { this.dirty = true; this.schedule(0); }
+    });
   }
 
   setWritable(v: boolean) {

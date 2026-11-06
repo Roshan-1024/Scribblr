@@ -8,16 +8,19 @@ export type AuthState =
   | { status: 'signed-in'; session: Session; profile: Profile };
 
 async function loadProfile(session: Session): Promise<Profile> {
-  const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle();
-  return (
-    data ?? {
-      id: session.user.id,
-      email: session.user.email ?? null,
-      display_name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Me',
-      color: '#4262FF',
-      is_admin: false,
-    }
-  );
+  const [{ data }, admin] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
+    // Live check (same one the database uses for limits), so the badge can't drift from reality.
+    supabase.rpc('is_admin'),
+  ]);
+  const profile: Profile = data ?? {
+    id: session.user.id,
+    email: session.user.email ?? null,
+    display_name: session.user.user_metadata?.display_name || session.user.email?.split('@')[0] || 'Me',
+    color: '#4262FF',
+    is_admin: false,
+  };
+  return { ...profile, is_admin: admin.data === true };
 }
 
 export function useAuth(): AuthState {
